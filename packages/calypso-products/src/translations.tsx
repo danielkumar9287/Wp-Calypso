@@ -91,8 +91,10 @@ export const getJetpackProductsShortNames = (): Record< string, TranslateResult 
 		[ PRODUCT_JETPACK_ANTI_SPAM_MONTHLY ]: translate( 'Anti-spam' ),
 		[ PRODUCT_JETPACK_VIDEOPRESS ]: translate( 'VideoPress' ),
 		[ PRODUCT_JETPACK_VIDEOPRESS_MONTHLY ]: translate( 'VideoPress' ),
-		[ PRODUCT_JETPACK_SOCIAL_BASIC ]: translate( 'Social' ),
-		[ PRODUCT_JETPACK_SOCIAL_BASIC_MONTHLY ]: translate( 'Social' ),
+		[ PRODUCT_JETPACK_SOCIAL_BASIC ]: translate( 'Social', { context: 'Jetpack product name' } ),
+		[ PRODUCT_JETPACK_SOCIAL_BASIC_MONTHLY ]: translate( 'Social', {
+			context: 'Jetpack product name',
+		} ),
 	};
 };
 
@@ -127,7 +129,7 @@ export const getJetpackProductsDisplayNames = (): Record< string, TranslateResul
 	const videoPress = translate( 'VideoPress' );
 	const antiSpam = translate( 'Anti-spam' );
 	const boost = translate( 'Boost' );
-	const social = translate( 'Social' );
+	const social = translate( 'Social', { context: 'Jetpack product name' } );
 
 	return {
 		[ PRODUCT_JETPACK_BACKUP_DAILY ]: backupDaily,
