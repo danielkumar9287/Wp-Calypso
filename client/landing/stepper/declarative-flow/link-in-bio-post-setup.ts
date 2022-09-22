@@ -12,7 +12,7 @@ export const linkInBioPostSetup: Flow = {
 		return [ 'linkInBioPostSetup' ] as StepPath[];
 	},
 
-	useStepNavigation( currentStep, navigate ) {
+	useStepNavigation( currentStep ) {
 		const siteSlug = useSiteSlug();
 
 		function submit( providedDependencies: ProvidedDependencies = {} ) {
@@ -26,18 +26,6 @@ export const linkInBioPostSetup: Flow = {
 			}
 		}
 
-		const goBack = () => {
-			return;
-		};
-
-		const goNext = () => {
-			return;
-		};
-
-		const goToStep = ( step: StepPath | `${ StepPath }?${ string }` ) => {
-			navigate( step );
-		};
-
-		return { goNext, goBack, goToStep, submit };
+		return { submit };
 	},
 };
