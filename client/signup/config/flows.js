@@ -124,6 +124,10 @@ function getEditorDestination( dependencies ) {
 	return `/page/${ dependencies.siteSlug }/home`;
 }
 
+function getPluginInstallDestination( dependencies ) {
+	return `/marketplace/${ dependencies.pluginSlug }/install/${ dependencies.siteSlug }`;
+}
+
 function getDestinationFromIntent( dependencies ) {
 	const { intent, storeType, startingPoint, siteSlug } = dependencies;
 	// If the user skips starting point, redirect them to My Home
@@ -169,6 +173,7 @@ const flows = generateFlows( {
 	getDestinationFromIntent,
 	getDIFMSignupDestination,
 	getDIFMSiteContentCollectionDestination,
+	getPluginInstallDestination,
 } );
 
 function removeUserStepFromFlow( flow ) {
