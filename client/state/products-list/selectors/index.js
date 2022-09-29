@@ -19,3 +19,4 @@ export { isSaasProduct } from './is-saas-product';
 export { getProductSaleCouponCost } from './get-product-sale-coupon-cost';
 export { getProductSaleCouponDiscount } from './get-product-sale-coupon-discount';
 export { getProductCurrencyCode } from './get-product-currency-code';
+export { getMarketplaceProducts } from './get-marketplace-products';
