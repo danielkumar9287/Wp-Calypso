@@ -5,7 +5,6 @@ import {
 	WPCOM_FEATURES_INSTALL_PURCHASED_PLUGINS,
 } from '@automattic/calypso-products';
 import { Gridicon, Button } from '@automattic/components';
-import { localizeUrl } from '@automattic/i18n-utils';
 import { useTranslate } from 'i18n-calypso';
 import { Fragment, useState, useCallback } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
@@ -289,7 +288,9 @@ const PluginDetailsCTA = ( { plugin, isPlaceholder } ) => {
 				<div className="plugin-details-cta__install">
 					<PrimaryButton
 						isLoggedIn={ isLoggedIn }
+						isMarketplaceProduct={ isMarketplaceProduct }
 						isSaasProduct={ isSaasProduct }
+						billingPeriod={ billingPeriod }
 						shouldUpgrade={ shouldUpgrade }
 						hasEligibilityMessages={ hasEligibilityMessages }
 						incompatiblePlugin={ incompatiblePlugin }
@@ -347,6 +348,8 @@ const PluginDetailsCTA = ( { plugin, isPlaceholder } ) => {
 function PrimaryButton( {
 	isLoggedIn,
 	isSaasProduct,
+	isMarketplaceProduct,
+	billingPeriod,
 	shouldUpgrade,
 	hasEligibilityMessages,
 	incompatiblePlugin,
@@ -361,9 +364,9 @@ function PrimaryButton( {
 				className="plugin-details-CTA__install-button"
 				primary
 				onClick={ ( e ) => e.stopPropagation() }
-				href={ localizeUrl( 'https://wordpress.com/pricing/' ) }
+				href={ getSignupURL( plugin.slug, isMarketplaceProduct ? billingPeriod : '' ) }
 			>
-				{ translate( 'View plans' ) }
+				{ translate( 'Start with this plugin' ) }
 			</Button>
 		);
 	}
@@ -412,6 +415,18 @@ function PluginDetailsCTAPlaceholder() {
 			<div className="plugin-details-cta__t-and-c">...</div>
 		</div>
 	);
+}
+
+function getSignupURL( pluginSlug, billingPeriod ) {
+	const url = new URL( '/start/with-plugin', location.href );
+
+	url.searchParams.set( 'pluginSlug', pluginSlug );
+
+	if ( billingPeriod ) {
+		url.searchParams.set( 'period', billingPeriod );
+	}
+
+	return url.href;
 }
 
 export default PluginDetailsCTA;
