@@ -125,7 +125,7 @@ function getEditorDestination( dependencies ) {
 }
 
 function getPluginInstallDestination( dependencies ) {
-	return `/marketplace/${ dependencies.pluginSlug }/install/${ dependencies.siteSlug }`;
+	return `/marketplace/${ dependencies.pluginSlug }/auto-install/${ dependencies.siteSlug }`;
 }
 
 function getDestinationFromIntent( dependencies ) {
