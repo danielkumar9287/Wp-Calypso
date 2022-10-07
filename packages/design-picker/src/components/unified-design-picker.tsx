@@ -1,5 +1,6 @@
 /* eslint-disable wpcalypso/jsx-classname-namespace */
 
+import { recordTracksEvent } from '@automattic/calypso-analytics';
 import { isEnabled } from '@automattic/calypso-config';
 import { FEATURE_WOOP } from '@automattic/calypso-products';
 import { MShotsImage } from '@automattic/onboarding';
@@ -10,7 +11,7 @@ import { sprintf, hasTranslation } from '@wordpress/i18n';
 import { useI18n } from '@wordpress/react-i18n';
 import classnames from 'classnames';
 import { useTranslate } from 'i18n-calypso';
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import {
 	DEFAULT_VIEWPORT_WIDTH,
 	DEFAULT_VIEWPORT_HEIGHT,
@@ -60,6 +61,30 @@ const DesignPreviewImage: React.FC< DesignPreviewImageProps > = ( {
 			scrollable={ true }
 		/>
 	);
+};
+
+interface TrackDesignViewProps {
+	categorization?: string | null;
+	design: Design;
+	isPremiumThemeAvailable?: boolean;
+}
+
+const TrackDesignView: React.FC< TrackDesignViewProps > = ( {
+	categorization,
+	design,
+	isPremiumThemeAvailable,
+} ) => {
+	useEffect( () => {
+		recordTracksEvent( 'calypso_design_picker_design_display', {
+			category: categorization,
+			design_type: design.design_type,
+			is_premium: design.is_premium,
+			is_premium_available: isPremiumThemeAvailable,
+			slug: design.slug,
+		} );
+	} );
+
+	return null;
 };
 
 interface DesignButtonProps {
@@ -196,23 +221,34 @@ const DesignButton: React.FC< DesignButtonProps > = ( {
 };
 
 interface DesignButtonContainerProps extends DesignButtonProps {
+	categorization?: string | null;
 	onSelect: ( design: Design ) => void;
 }
 
 const DesignButtonContainer: React.FC< DesignButtonContainerProps > = ( {
+	categorization,
 	onSelect,
 	...props
 } ) => {
 	const isBlankCanvas = isBlankCanvasDesign( props.design );
 
-	if ( isBlankCanvas ) {
-		return <PatternAssemblerCta onButtonClick={ () => onSelect( props.design ) } />;
-	}
-
-	return (
+	const designButtonContents = isBlankCanvas ? (
+		<PatternAssemblerCta onButtonClick={ () => onSelect( props.design ) } />
+	) : (
 		<div className="design-button-container">
 			<DesignButton { ...props } />
 		</div>
+	);
+
+	return (
+		<>
+			<TrackDesignView
+				categorization={ categorization }
+				design={ props.design }
+				isPremiumThemeAvailable={ props.isPremiumThemeAvailable }
+			/>
+			{ designButtonContents }
+		</>
 	);
 };
 
@@ -300,6 +336,7 @@ const StaticDesignPicker: React.FC< StaticDesignPickerProps > = ( {
 						verticalId={ verticalId }
 						hasPurchasedTheme={ wasThemePurchased( purchasedThemes, design ) }
 						currentPlanFeatures={ currentPlanFeatures }
+						categorization={ categorization?.selection }
 					/>
 				) ) }
 			</div>
@@ -327,6 +364,7 @@ const GeneratedDesignPicker: React.FC< GeneratedDesignPickerProps > = ( {
 				} );
 				return (
 					<div className="design-button-container" key={ `generated-design__${ design.slug }` }>
+						<TrackDesignView design={ design } />
 						<div className="design-picker__design-option">
 							<button className="generated-design-thumbnail" onClick={ () => onPreview( design ) }>
 								<span className="generated-design-thumbnail__image design-picker__image-frame design-picker__image-frame-no-header">
