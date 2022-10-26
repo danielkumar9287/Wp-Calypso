@@ -33,8 +33,12 @@ const LaunchpadSitePreview = ( { siteSlug }: { siteSlug: string | null } ) => {
 		} );
 	}
 
+	function preventTabbingToIFrame(): void {
+		( document.querySelector( 'iframe.web-preview__frame' ) as HTMLIFrameElement ).tabIndex = -1;
+	}
+
 	return (
-		<div className="launchpad__site-preview-wrapper">
+		<div className="launchpad__site-preview-wrapper" onLoad={ preventTabbingToIFrame }>
 			<WebPreview
 				className="launchpad__-web-preview"
 				showDeviceSwitcher={ true }
