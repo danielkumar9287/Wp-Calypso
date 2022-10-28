@@ -222,7 +222,7 @@ export function attachBuildTimestamp( context ) {
 }
 
 export function serverRender( req, res ) {
-	performanceMark( req, 'serverRender' );
+	performanceMark( req.context, 'serverRender' ); // HERE: 2
 	const context = req.context;
 
 	let cacheKey = false;
@@ -230,7 +230,7 @@ export function serverRender( req, res ) {
 	attachI18n( context );
 
 	if ( shouldServerSideRender( context ) ) {
-		performanceMark( req, 'render layout', true );
+		performanceMark( req.context, 'render layout', true );
 		cacheKey = getCacheKey( req );
 		debug( `SSR render with cache key ${ cacheKey }.` );
 
@@ -241,11 +241,11 @@ export function serverRender( req, res ) {
 		);
 	}
 
-	performanceMark( req, 'dehydrateQueryClient', true );
+	performanceMark( req.context, 'dehydrateQueryClient', true );
 	context.initialQueryState = dehydrateQueryClient( context.queryClient );
 
 	if ( context.store ) {
-		performanceMark( req, 'redux store', true );
+		performanceMark( req.context, 'redux store', true );
 		attachHead( context );
 
 		const isomorphicSubtrees = context.section?.isomorphic ? [ 'themes', 'ui' ] : [];
@@ -271,13 +271,13 @@ export function serverRender( req, res ) {
 			stateCache.set( cacheKey, serverState.get() );
 		}
 	}
-	performanceMark( req, 'final render', true );
+	performanceMark( req.context, 'final render', true );
 	context.clientData = config.clientData;
 
 	attachBuildTimestamp( context );
 
 	res.send( renderJsx( 'index', context ) );
-	performanceMark( req, 'post-sending JSX' );
+	performanceMark( req.context, 'post-sending JSX' );
 }
 
 /**

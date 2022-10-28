@@ -1,6 +1,7 @@
 import debugFactory from 'debug';
 import { logServerEvent } from 'calypso/lib/analytics/statsd-utils';
 import trackScrollPage from 'calypso/lib/track-scroll-page';
+import performanceMark from 'calypso/server/lib/performance-mark';
 import { requestThemes, requestThemeFilters } from 'calypso/state/themes/actions';
 import { DEFAULT_THEME_QUERY } from 'calypso/state/themes/constants';
 import { getThemeFilters, getThemesForQuery } from 'calypso/state/themes/selectors';
@@ -31,6 +32,7 @@ export function getProps( context ) {
 }
 
 export function loggedOut( context, next ) {
+	performanceMark( context, 'loggedOut' );
 	if ( context.isServerSide && Object.keys( context.query ).length > 0 ) {
 		// Don't server-render URLs with query params
 		return next();
@@ -43,6 +45,7 @@ export function loggedOut( context, next ) {
 }
 
 export function fetchThemeData( context, next ) {
+	performanceMark( context, 'fetchThemeData' );
 	if ( ! context.isServerSide ) {
 		return next();
 	}
@@ -72,6 +75,7 @@ export function fetchThemeData( context, next ) {
 }
 
 export function fetchThemeFilters( context, next ) {
+	performanceMark( context, 'fetchThemeFilters' );
 	const { store } = context;
 	const hasFilters = Object.keys( getThemeFilters( store.getState() ) ).length > 0;
 

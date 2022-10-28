@@ -2,6 +2,7 @@ import debugFactory from 'debug';
 import { isEmpty } from 'lodash';
 import { stringify } from 'qs';
 import { setSectionMiddleware } from 'calypso/controller';
+import performanceMark from 'calypso/server/lib/performance-mark';
 import { serverRender, setShouldServerSideRender } from 'calypso/server/render';
 import { createQueryClientSSR } from 'calypso/state/query-client-ssr';
 import { setRoute } from 'calypso/state/route/actions';
@@ -17,7 +18,7 @@ export function serverRouter( expressApp, setUpRoute, section ) {
 				debug( `Using SSR pipeline for path: ${ req.path } with handler ${ route }` );
 				next();
 			},
-			setUpRoute,
+			setUpRoute, // Here?
 			combineMiddlewares(
 				setSectionMiddleware( section ),
 				setRouteMiddleware,
@@ -25,12 +26,13 @@ export function serverRouter( expressApp, setUpRoute, section ) {
 				...middlewares
 			),
 			// Regular serverRender when there are no errors.
-			serverRender,
+			serverRender, // And here?
 
 			// Capture the error. This assumes that any of the previous middlewares
 			// have changed req.context to include info about the error, and serverRender
 			// will render it.
 			( err, req, res, next ) => {
+				performanceMark( req.context, 'serverRouter error handler' );
 				req.error = err;
 				res.status( err.status || 404 );
 				if ( err.status >= 500 ) {
@@ -39,6 +41,7 @@ export function serverRouter( expressApp, setUpRoute, section ) {
 					req.logger.warn( err );
 				}
 				serverRender( req, res, next );
+				performanceMark( req.context, 'post-handling serverRouter error' );
 				// Keep propagating the error to ensure regular middleware doesn't get executed.
 				// In particular, without this we'll try to render a 404 page.
 				next( err );
@@ -55,6 +58,8 @@ function setRouteMiddleware( context, next ) {
 
 function combineMiddlewares( ...middlewares ) {
 	return function ( req, res, expressNext ) {
+		performanceMark( req.context, 'combining middlewares' );
+
 		req.context = getEnhancedContext( req, res );
 		applyMiddlewares(
 			req.context,
