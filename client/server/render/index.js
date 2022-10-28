@@ -222,7 +222,7 @@ export function attachBuildTimestamp( context ) {
 }
 
 export function serverRender( req, res ) {
-	performanceMark( req.context, 'serverRender' ); // HERE: 2
+	performanceMark( req.context, 'serverRender' );
 	const context = req.context;
 
 	let cacheKey = false;
