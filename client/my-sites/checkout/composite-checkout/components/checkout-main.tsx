@@ -136,7 +136,6 @@ export default function CheckoutMain( {
 	const createUserAndSiteBeforeTransaction =
 		Boolean( isLoggedOutCart || isNoSiteCart ) && ! isJetpackCheckout;
 	const reduxDispatch = useDispatch();
-	const isJetpackSitelessCheckout = isJetpackCheckout && ! jetpackSiteSlug;
 	const updatedSiteSlug = isJetpackCheckout ? jetpackSiteSlug : siteSlug;
 
 	const showErrorMessageBriefly = useCallback(
@@ -199,7 +198,6 @@ export default function CheckoutMain( {
 	const isInitialCartLoading = useAddProductsFromUrl( {
 		isLoadingCart,
 		isCartPendingUpdate,
-		isJetpackSitelessCheckout,
 		productsForCart,
 		areCartProductsPreparing,
 		couponCodeFromUrl,
