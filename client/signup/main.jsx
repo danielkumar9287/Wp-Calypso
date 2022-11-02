@@ -7,6 +7,7 @@ import {
 import { isBlankCanvasDesign } from '@automattic/design-picker';
 import { isNewsletterOrLinkInBioFlow } from '@automattic/onboarding';
 import debugModule from 'debug';
+import { getLocaleSlug } from 'i18n-calypso';
 import {
 	clone,
 	defer,
@@ -28,6 +29,7 @@ import { connect } from 'react-redux';
 import DocumentHead from 'calypso/components/data/document-head';
 import QuerySiteDomains from 'calypso/components/data/query-site-domains';
 import LocaleSuggestions from 'calypso/components/locale-suggestions';
+import ZendeskChat from 'calypso/components/zendesk-chat';
 import {
 	recordSignupStart,
 	recordSignupComplete,
@@ -234,6 +236,7 @@ class Signup extends Component {
 
 	componentDidMount() {
 		debug( 'Signup component mounted' );
+
 		this.startTrackingForBusinessSite();
 		recordSignupStart( this.props.flowName, this.props.refParameter, this.getRecordProps() );
 		if ( ! this.state.shouldShowLoadingScreen ) {
@@ -761,6 +764,8 @@ class Signup extends Component {
 		}
 
 		const isReskinned = isReskinnedFlow( this.props.flowName );
+		const zendeskChatKey = config( 'zendesk_chat_key' );
+		const isEnglishLocale = config( 'english_locales' ).includes( getLocaleSlug() ?? '' );
 
 		return (
 			<>
@@ -795,6 +800,7 @@ class Signup extends Component {
 						/>
 					) }
 				</div>
+				{ isEnglishLocale && <ZendeskChat chatId={ zendeskChatKey } /> }
 			</>
 		);
 	}
