@@ -1,4 +1,5 @@
 import config from '@automattic/calypso-config';
+import { getUrlParts } from '@automattic/calypso-url';
 import { localize, translate } from 'i18n-calypso';
 import { find } from 'lodash';
 import page from 'page';
@@ -46,9 +47,18 @@ import StatsPeriodHeader from './stats-period-header';
 import StatsPeriodNavigation from './stats-period-navigation';
 import statsStrings from './stats-strings';
 
-function updateQueryString( query = {} ) {
+function getPageUrl() {
+	return getUrlParts( page.current );
+}
+
+function updateQueryString( url = null, query = {} ) {
+	let search = window.location.search;
+	if ( url ) {
+		search = url.search;
+	}
+
 	return {
-		...parseQs( window.location.search.substring( 1 ) ),
+		...parseQs( search.substring( 1 ) ),
 		...query,
 	};
 }
@@ -130,8 +140,9 @@ class StatsSite extends Component {
 
 	barClick = ( bar ) => {
 		this.props.recordGoogleEvent( 'Stats', 'Clicked Chart Bar' );
-		const updatedQs = stringifyQs( updateQueryString( { startDate: bar.data.period } ) );
-		page.redirect( `${ window.location.pathname }?${ updatedQs }` );
+		const parsed = getPageUrl();
+		const updatedQs = stringifyQs( updateQueryString( parsed, { startDate: bar.data.period } ) );
+		page.redirect( `${ parsed.pathname }?${ updatedQs }` );
 	};
 
 	onChangeLegend = ( activeLegend ) => this.setState( { activeLegend } );
@@ -140,8 +151,8 @@ class StatsSite extends Component {
 		if ( ! tab.loading && tab.attr !== this.props.chartTab ) {
 			this.props.recordGoogleEvent( 'Stats', 'Clicked ' + titlecase( tab.attr ) + ' Tab' );
 			// switch the tab by navigating to route with updated query string
-			const updatedQs = stringifyQs( updateQueryString( { tab: tab.attr } ) );
-			page.show( `${ window.location.pathname }?${ updatedQs }` );
+			const updatedQs = stringifyQs( updateQueryString( getPageUrl(), { tab: tab.attr } ) );
+			page.show( `${ getPageUrl().pathname }?${ updatedQs }` );
 		}
 	};
 
@@ -215,7 +226,13 @@ class StatsSite extends Component {
 						"Learn more about the activity and behavior of your site's visitors. {{learnMoreLink}}Learn more{{/learnMoreLink}}.",
 						{
 							components: {
-								learnMoreLink: <InlineSupportLink supportContext="stats" showIcon={ false } />,
+								learnMoreLink: (
+									<InlineSupportLink
+										supportContext="stats"
+										showIcon={ false }
+										showSupportModal={ !! config( 'is_running_in_jetpack_site' ) }
+									/>
+								),
 							},
 						}
 					) }
