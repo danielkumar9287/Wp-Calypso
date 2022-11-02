@@ -13,18 +13,6 @@ import getPlanCancellationFeatures from './get-plan-cancellation-features';
 import type { Purchase } from 'calypso/lib/purchases/types';
 import './style.scss';
 
-interface PreCancellationDialogProps {
-	closeDialog: () => void;
-	removePlan: () => void;
-	isDialogVisible: boolean;
-	isRemoving: boolean;
-	site: SiteExcerptData;
-	purchase: Purchase;
-	hasDomain: boolean;
-	primaryDomain: string;
-	wpcomURL: string;
-}
-
 /**
  * Pre Cancellation Dialog list of features.
  * Returns the list of features that the user will lose by canceling their plan.
@@ -32,22 +20,26 @@ interface PreCancellationDialogProps {
 interface FeaturesListProps {
 	productSlug: string | undefined;
 	subTitle: string | undefined;
-	domainFeature: JSX.Element | null;
 	isPurchaseRefundable: boolean;
 	isPurchaseAutoRenewing: boolean;
+	hasDomain: boolean;
+	wpcomURL: string;
+	primaryDomain: string | undefined;
 }
 export const FeaturesList = ( {
 	productSlug,
 	subTitle,
-	domainFeature,
-	isPurchaseRefundable,
-	isPurchaseAutoRenewing,
+	hasDomain,
+	wpcomURL,
+	primaryDomain,
 }: FeaturesListProps ) => {
 	if ( typeof productSlug !== 'string' ) {
 		return null;
 	}
 
-	const planFeatures = getPlanCancellationFeatures( productSlug );
+	const planFeatures = getPlanCancellationFeatures( productSlug, hasDomain );
+	const domainFeature =
+		hasDomain && primaryDomain && wpcomURL ? <p>Debug domain: traffic will be redirected</p> : null;
 
 	return (
 		<>
@@ -68,22 +60,6 @@ export const FeaturesList = ( {
 						{ domainFeature }
 					</li>
 				) }
-				<li key="debug-refundable">
-					<Gridicon
-						className="pre-cancellation-dialog__item-cross-small"
-						size={ 24 }
-						icon="cross-small"
-					/>
-					{ isPurchaseRefundable ? 'Refundable: yes' : 'Refundable: no' }
-				</li>
-				<li key="debug-autorenew">
-					<Gridicon
-						className="pre-cancellation-dialog__item-cross-small"
-						size={ 24 }
-						icon="cross-small"
-					/>
-					{ isPurchaseAutoRenewing ? 'Auto-renew: yes' : 'Auto-renew: no' }
-				</li>
 				{ planFeatures.map( ( feature ) => {
 					return (
 						<li key={ feature }>
@@ -151,6 +127,18 @@ export const RenderFooterText = ( { purchase }: RenderFooterTextProps ) => {
 /**
  * The Pre Cancellation Dialog component
  */
+interface PreCancellationDialogProps {
+	closeDialog: () => void;
+	removePlan: () => void;
+	isDialogVisible: boolean;
+	isRemoving: boolean;
+	site: SiteExcerptData;
+	purchase: Purchase;
+	hasDomain: boolean;
+	primaryDomain: string;
+	wpcomURL: string;
+}
+
 export const PreCancellationDialog = ( {
 	closeDialog,
 	removePlan,
@@ -168,9 +156,11 @@ export const PreCancellationDialog = ( {
 	 */
 	const productSlug = site.plan?.product_slug;
 	const planLabel = site.plan?.product_name_short;
-	const subTitle = translate( 'Subtitle' );
 	const isPurchaseRefundable = isRefundable( purchase );
 	const isPurchaseAutoRenewing = purchase.isAutoRenewEnabled;
+	const subTitle = isPurchaseRefundable
+		? translate( 'Subtitle - refund' )
+		: translate( 'Subtitle' );
 
 	/**
 	 * Click events, buttons tracking and action.
@@ -187,9 +177,7 @@ export const PreCancellationDialog = ( {
 	 * Domain redirect copy
 	 */
 	const domainFeature =
-		hasDomain && primaryDomain && wpcomURL ? (
-			<p>Warning: domain traffic will be redirected</p>
-		) : null;
+		hasDomain && primaryDomain && wpcomURL ? <p>Debug domain: traffic will be redirected</p> : null;
 
 	/**
 	 * Dialog buttons
@@ -241,9 +229,11 @@ export const PreCancellationDialog = ( {
 						<FeaturesList
 							productSlug={ productSlug }
 							subTitle={ subTitle }
-							domainFeature={ domainFeature }
 							isPurchaseRefundable={ isPurchaseRefundable }
 							isPurchaseAutoRenewing={ isPurchaseAutoRenewing }
+							hasDomain={ hasDomain }
+							wpcomURL={ wpcomURL }
+							primaryDomain={ primaryDomain }
 						/>
 						<RenderFooterText purchase={ purchase } />
 					</div>
