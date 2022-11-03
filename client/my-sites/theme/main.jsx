@@ -34,6 +34,7 @@ import NavTabs from 'calypso/components/section-nav/tabs';
 import PageViewTracker from 'calypso/lib/analytics/page-view-tracker';
 import { decodeEntities, preventWidows } from 'calypso/lib/formatting';
 import { PerformanceTrackerStop } from 'calypso/lib/performance-tracking';
+import CalypsoShoppingCartProvider from 'calypso/my-sites/checkout/calypso-shopping-cart-provider';
 import AutoLoadingHomepageModal from 'calypso/my-sites/themes/auto-loading-homepage-modal';
 import { localizeThemesPath } from 'calypso/my-sites/themes/helpers';
 import ThanksModal from 'calypso/my-sites/themes/thanks-modal';
@@ -48,6 +49,7 @@ import isVipSite from 'calypso/state/selectors/is-vip-site';
 import siteHasFeature from 'calypso/state/selectors/site-has-feature';
 import { getSiteSlug, isJetpackSite } from 'calypso/state/sites/selectors';
 import { setThemePreviewOptions } from 'calypso/state/themes/actions';
+import { useAddExternalManagedThemeToCart } from 'calypso/state/themes/hooks/use-add-external-managed-theme-to-cart';
 import {
 	doesThemeBundleSoftwareSet,
 	isThemeActive,
@@ -63,6 +65,7 @@ import {
 	getThemeForumUrl,
 	getThemeDemoUrl,
 	shouldShowTryAndCustomize,
+	getExternalManagedThemeProduct,
 	isExternallyManagedTheme as getIsExternallyManagedTheme,
 	isSiteEligibleForManagedExternalThemes as getIsSiteEligibleForManagedExternalThemes,
 } from 'calypso/state/themes/selectors';
@@ -116,10 +119,16 @@ class ThemeSheet extends Component {
 			action: PropTypes.func,
 			getUrl: PropTypes.func,
 		} ),
+		externallyManagedTheme: PropTypes.bool,
+		siteEligibleForManagedExternalThemes: PropTypes.bool,
 	};
 
 	static defaultProps = {
 		section: '',
+	};
+
+	state = {
+		isLoading: false,
 	};
 
 	scrollToTop = () => {
@@ -147,9 +156,26 @@ class ThemeSheet extends Component {
 		return !! this.props.screenshots;
 	};
 
+	/**
+	 * Creates a new shopping cart item for a External Managed theme.
+	 *
+	 * @param themeId he unique string that identifies the product
+	 * @returns { object } the new item
+	 */
+	getExternalManagedThemeProduct = ( themeId ) => {
+		return {
+			product_slug: 'premium_theme',
+			meta: themeId,
+		};
+	};
+
 	onButtonClick = () => {
-		const { defaultOption, id } = this.props;
-		defaultOption.action && defaultOption.action( id );
+		const { defaultOption, id, externallyManagedTheme, addExternalManagedThemeToCart } = this.props;
+		if ( ! externallyManagedTheme || ! config.isEnabled( 'themes/third-party-premium' ) ) {
+			defaultOption.action && defaultOption.action( id );
+		} else {
+			addExternalManagedThemeToCart();
+		}
 	};
 
 	onSecondaryButtonClick = () => {
@@ -566,7 +592,7 @@ class ThemeSheet extends Component {
 				</span>
 			);
 		} else if ( isLoggedIn ) {
-			if ( isPremium && ! isPurchased && ! isBundledSoftwareSet ) {
+			if ( isPremium && ! isPurchased && ! isBundledSoftwareSet && ! externallyManagedTheme ) {
 				// purchase
 				return translate( 'Pick this design' );
 			} else if (
@@ -580,6 +606,20 @@ class ThemeSheet extends Component {
 					comment:
 						'label prompting user to upgrade the WordPress.com plan to activate a certain theme',
 				} );
+			} else if (
+				isPremium &&
+				externallyManagedTheme &&
+				! isPurchased &&
+				! siteEligibleForManagedExternalThemes
+			) {
+				return translate( 'Upgrade and subscribe to activate' );
+			} else if (
+				isPremium &&
+				externallyManagedTheme &&
+				! isPurchased &&
+				siteEligibleForManagedExternalThemes
+			) {
+				return translate( 'Subscribe to activate' );
 			}
 			// else: activate
 			return translate( 'Activate this design' );
@@ -636,14 +676,21 @@ class ThemeSheet extends Component {
 		const label = this.getDefaultOptionLabel();
 		const price = this.renderPrice();
 		const placeholder = <span className="theme__sheet-button-placeholder">loading......</span>;
-		const { isActive } = this.props;
+		const { isActive, externallyManagedTheme } = this.props;
+		const { isLoading } = this.props;
 
 		return (
 			<Button
 				className="theme__sheet-primary-button"
-				href={ getUrl ? getUrl( this.props.id ) : null }
+				href={
+					getUrl &&
+					( ! externallyManagedTheme || ! config.isEnabled( 'themes/third-party-premium' ) )
+						? getUrl( this.props.id )
+						: null
+				}
 				onClick={ this.onButtonClick }
 				primary
+				disabled={ isLoading }
 				target={ isActive ? '_blank' : null }
 			>
 				{ this.isLoaded() ? label : placeholder }
@@ -659,6 +706,59 @@ class ThemeSheet extends Component {
 	goBack = () => {
 		const { backPath, locale, isLoggedIn } = this.props;
 		page( localizeThemesPath( backPath, locale, ! isLoggedIn ) );
+	};
+
+	getBannerUpsellTitle = () => {
+		const {
+			isBundledSoftwareSet,
+			externallyManagedTheme,
+			translate,
+			isPurchased,
+			siteEligibleForManagedExternalThemes,
+		} = this.props;
+
+		if ( isBundledSoftwareSet && ! externallyManagedTheme ) {
+			return translate( 'Access this WooCommerce theme with a Business plan!' );
+		} else if ( externallyManagedTheme ) {
+			if ( ! isPurchased && ! siteEligibleForManagedExternalThemes ) {
+				return translate( 'Upgrade to a Business Plan and subscribe to this theme!' );
+			}
+			return translate( 'Subscribe to this Premium Theme!' );
+		}
+		return translate( 'Access this theme for FREE with a Premium or Business plan!' );
+	};
+
+	getBannerUpsellDescription = () => {
+		const {
+			isBundledSoftwareSet,
+			externallyManagedTheme,
+			translate,
+			isPurchased,
+			siteEligibleForManagedExternalThemes,
+		} = this.props;
+
+		if ( isBundledSoftwareSet && ! externallyManagedTheme ) {
+			return translate(
+				'This theme comes bundled with the WooCommerce plugin. Upgrade to a Business plan to select this theme and unlock all its features.'
+			);
+		} else if ( externallyManagedTheme ) {
+			if ( ! isPurchased && ! siteEligibleForManagedExternalThemes ) {
+				return translate(
+					'Unlock this theme by upgrading to a Business plan and subscribing monthly or yearly to this Premium Theme.'
+				);
+			}
+			return translate(
+				'Subscribe monthly or yearly to this Premium Theme and unlock all its features.'
+			);
+		}
+		return translate(
+			'Instantly unlock all premium themes, more storage space, advanced customization, video support, and more when you upgrade.'
+		);
+	};
+
+	onClickBanner = () => {
+		const { addExternalManagedThemeToCart } = this.props;
+		addExternalManagedThemeToCart();
 	};
 
 	renderSheet = () => {
@@ -680,6 +780,9 @@ class ThemeSheet extends Component {
 			canUserUploadThemes,
 			isWPForTeamsSite,
 			isLoggedIn,
+			externallyManagedTheme,
+			isPurchased,
+			siteEligibleForManagedExternalThemes,
 		} = this.props;
 
 		const analyticsPath = `/theme/${ id }${ section ? '/' + section : '' }${
@@ -727,7 +830,8 @@ class ThemeSheet extends Component {
 		// Show theme upsell banner on Simple sites.
 		const hasWpComThemeUpsellBanner =
 			( ! isJetpack && isPremium && ! hasUnlimitedPremiumThemes && ! isVip && ! retired ) ||
-			isBundledSoftwareSet;
+			isBundledSoftwareSet ||
+			externallyManagedTheme;
 		// Show theme upsell banner on Jetpack sites.
 		const hasWpOrgThemeUpsellBanner =
 			! isAtomic && ! isWpcomTheme && ( ! siteId || ( ! isJetpack && ! canUserUploadThemes ) );
@@ -739,29 +843,24 @@ class ThemeSheet extends Component {
 			hasWpComThemeUpsellBanner || hasWpOrgThemeUpsellBanner || hasThemeUpsellBannerAtomic;
 
 		if ( hasWpComThemeUpsellBanner ) {
-			const upsellTitle = isBundledSoftwareSet
-				? translate( 'Access this WooCommerce theme with a Business plan!' )
-				: translate( 'Access this theme for FREE with a Premium or Business plan!' );
-			const upsellDescription = isBundledSoftwareSet
-				? translate(
-						'This theme comes bundled with the WooCommerce plugin. Upgrade to a Business plan to select this theme and unlock all its features.'
-				  )
-				: translate(
-						'Instantly unlock all premium themes, more storage space, advanced customization, video support, and more when you upgrade.'
-				  );
-
+			const forceDisplay =
+				( isBundledSoftwareSet && ! isSiteBundleEligible ) ||
+				( externallyManagedTheme && ( ! isPurchased || ! siteEligibleForManagedExternalThemes ) );
 			pageUpsellBanner = (
 				<UpsellNudge
 					plan={ PLAN_PREMIUM }
 					className="theme__page-upsell-banner"
-					title={ upsellTitle }
-					description={ preventWidows( upsellDescription ) }
+					title={ this.getBannerUpsellTitle() }
+					description={ preventWidows( this.getBannerUpsellDescription() ) }
 					event="themes_plan_particular_free_with_plan"
 					feature={ WPCOM_FEATURES_PREMIUM_THEMES }
-					forceHref={ true }
+					forceHref={ ! externallyManagedTheme }
+					disableHref={ externallyManagedTheme }
+					onClick={ externallyManagedTheme ? this.onClickBanner : null }
 					href={ plansUrl }
 					showIcon={ true }
-					forceDisplay={ isBundledSoftwareSet && ! isSiteBundleEligible }
+					forceDisplay={ forceDisplay }
+					displayAsLink={ externallyManagedTheme }
 				/>
 			);
 		}
@@ -847,6 +946,8 @@ const ConnectedThemeSheet = connectOptions( ThemeSheet );
 
 const ThemeSheetWithOptions = ( props ) => {
 	const {
+		id,
+		siteSlug,
 		siteId,
 		isActive,
 		isLoggedIn,
@@ -885,15 +986,33 @@ const ThemeSheetWithOptions = ( props ) => {
 		defaultOption = 'activate';
 	}
 
+	const [ addExternalManagedThemeToCart, isLoading ] = useAddExternalManagedThemeToCart( {
+		id,
+		siteSlug,
+		siteEligibleForManagedExternalThemes,
+		isPurchased,
+		externalManagedThemeProduct,
+	} );
+
 	return (
 		<ConnectedThemeSheet
 			{ ...props }
 			demo_uri={ demoUrl }
+			isLoading={ isLoading }
+			addExternalManagedThemeToCart={ addExternalManagedThemeToCart }
 			siteId={ siteId }
 			defaultOption={ defaultOption }
 			secondaryOption={ secondaryOption }
 			source="showcase-sheet"
 		/>
+	);
+};
+
+const ThemeSheetWrapper = ( props ) => {
+	return (
+		<CalypsoShoppingCartProvider>
+			<ThemeSheetWithOptions { ...props } />
+		</CalypsoShoppingCartProvider>
 	);
 };
 
@@ -937,6 +1056,7 @@ export default connect(
 			forumUrl: getThemeForumUrl( state, id, siteId ),
 			hasUnlimitedPremiumThemes: siteHasFeature( state, siteId, WPCOM_FEATURES_PREMIUM_THEMES ),
 			showTryAndCustomize: shouldShowTryAndCustomize( state, id, siteId ),
+			externallyManagedTheme: isExternallyManagedTheme( state, id ),
 			canUserUploadThemes: siteHasFeature( state, siteId, FEATURE_UPLOAD_THEMES ),
 			// Remove the trailing slash because the page URL doesn't have one either.
 			canonicalUrl: localizeUrl( englishUrl, getLocaleSlug(), false ).replace( /\/$/, '' ),
@@ -954,4 +1074,4 @@ export default connect(
 		setThemePreviewOptions,
 		recordTracksEvent,
 	}
-)( localize( ThemeSheetWithOptions ) );
+)( localize( ThemeSheetWrapper ) );
