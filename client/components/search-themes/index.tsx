@@ -1,4 +1,5 @@
 import { Gridicon } from '@automattic/components';
+import classNames from 'classnames';
 import { useTranslate } from 'i18n-calypso';
 import { useRef, useState } from 'react';
 import { useSelector } from 'react-redux';
@@ -25,6 +26,7 @@ const SearchThemes: React.FC< SearchThemesProps > = ( { query, onSearch } ) => {
 	const [ cursorPosition, setCursorPosition ] = useState( 0 );
 	const [ editedSearchElement, setEditedSearchElement ] = useState( '' );
 	const [ isApplySearch, setIsApplySearch ] = useState( false );
+	const [ isSearchOpen, setIsSearchOpen ] = useState( false );
 
 	const findTextForSuggestions = ( inputValue: string ) => {
 		const val = inputValue;
@@ -62,9 +64,17 @@ const SearchThemes: React.FC< SearchThemesProps > = ( { query, onSearch } ) => {
 	};
 
 	return (
-		<div>
+		<div
+			className={ classNames( 'search-themes', {
+				'has-keyed-suggestions': isSearchOpen,
+			} ) }
+		>
 			<StickyPanel>
-				<div role="presentation" data-tip-target="search-themes-card">
+				<div
+					className="search-themes-card"
+					role="presentation"
+					data-tip-target="search-themes-card"
+				>
 					<Search
 						initialValue={ searchInput }
 						value={ searchInput }
@@ -75,6 +85,8 @@ const SearchThemes: React.FC< SearchThemesProps > = ( { query, onSearch } ) => {
 						applySearch={ isApplySearch }
 						hideClose
 						onSearch={ onSearch }
+						onSearchOpen={ () => setIsSearchOpen( true ) }
+						onSearchClose={ () => setIsSearchOpen( false ) }
 						onSearchChange={ ( inputValue: string ) => {
 							findTextForSuggestions( inputValue );
 							setSearchInput( inputValue );
@@ -87,6 +99,8 @@ const SearchThemes: React.FC< SearchThemesProps > = ( { query, onSearch } ) => {
 								terms={ filters }
 								suggest={ suggest }
 								exclusions={ [ /twenty.*?two/ ] }
+								showAllLabelText={ translate( 'View all' ) }
+								showLessLabelText={ translate( 'View less' ) }
 							/>
 						) }
 						{ searchInput !== '' && (
@@ -95,9 +109,9 @@ const SearchThemes: React.FC< SearchThemesProps > = ( { query, onSearch } ) => {
 									icon="cross"
 									className="search-themes-card__icon-close"
 									tabIndex={ 0 }
-									onClick={ clearSearch }
 									aria-controls="search-component-search-themes"
 									aria-label={ translate( 'Clear Search' ) }
+									onClick={ clearSearch }
 								/>
 							</div>
 						) }

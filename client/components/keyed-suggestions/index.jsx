@@ -28,6 +28,8 @@ class KeyedSuggestions extends Component {
 		terms: PropTypes.object,
 		input: PropTypes.string,
 		exclusions: PropTypes.array,
+		showAllLabelText: PropTypes.string,
+		showLessLabelText: PropTypes.string,
 	};
 
 	static defaultProps = {
@@ -364,22 +366,24 @@ class KeyedSuggestions extends Component {
 				<div className="keyed-suggestions__category" key={ key }>
 					<span className="keyed-suggestions__category-name">{ taxonomyTranslations[ key ] }</span>
 					<span className="keyed-suggestions__category-counter">
-						{ i18n.translate( '%(filtered)s of %(total)s', {
-							args: { filtered, total },
-						} ) }
+						{ key === this.state.showAll
+							? total
+							: i18n.translate( '%(filtered)s of %(total)s', {
+									args: { filtered, total },
+							  } ) }
 					</span>
 					{ Object.keys( this.props.terms[ key ] ).length > suggestions[ key ].length && (
 						<SuggestionsButtonAll
 							onClick={ this.onShowAllClick }
 							category={ key }
-							label={ i18n.translate( 'Show all' ) }
+							label={ this.props.showAllLabelText || i18n.translate( 'Show all' ) }
 						/>
 					) }
 					{ key === this.state.showAll && (
 						<SuggestionsButtonAll
 							onClick={ this.onShowAllClick }
 							category=""
-							label={ i18n.translate( 'Show less' ) }
+							label={ this.props.showLessLabelText || i18n.translate( 'Show less' ) }
 						/>
 					) }
 				</div>
