@@ -1,10 +1,12 @@
+import { PLAN_BUSINESS_MONTHLY } from '@automattic/calypso-products';
+import { MinimalRequestCartProduct } from '@automattic/shopping-cart';
 import { addQueryArgs } from '@wordpress/url';
 import page from 'page';
 import 'calypso/state/themes/init';
 import { cartManagerClient } from 'calypso/my-sites/checkout/cart-manager-client';
 import { getSiteSlug } from 'calypso/state/sites/selectors';
 import {
-	// isExternallyManagedTheme as getIsExternallyManagedTheme,
+	isExternallyManagedTheme as getIsExternallyManagedTheme,
 	isSiteEligibleForManagedExternalThemes as getIsSiteEligibleForManagedExternalThemes,
 	getExternalManagedThemeProduct,
 	isPremiumThemeAvailable,
@@ -22,47 +24,49 @@ const isLoadingCart = ( isLoading: boolean ) => ( dispatch: CalypsoDispatch ) =>
 
 export function addExternalManagedThemeToCart( themeId: string, siteId: number ) {
 	return async ( dispatch: CalypsoDispatch, getState: AppState ) => {
+		const isExternallyManagedTheme = getIsExternallyManagedTheme( getState(), themeId );
+
+		if ( ! isExternallyManagedTheme ) {
+			throw new Error( 'Theme is not externally managed' );
+		}
+
+		const isPurchased = isPremiumThemeAvailable( getState(), themeId, siteId );
+
+		if ( isPurchased ) {
+			throw new Error( 'Theme is already purchased' );
+		}
+
 		const siteSlug = getSiteSlug( getState(), siteId );
 
 		const isSiteEligibleForManagedExternalThemes = getIsSiteEligibleForManagedExternalThemes(
 			getState(),
 			siteId
 		);
-		// const isExternallyManagedTheme = getIsExternallyManagedTheme( getState(), themeId );
 		const externalManagedThemeProduct = getExternalManagedThemeProduct( themeId );
-		const isPurchased = isPremiumThemeAvailable( getState(), themeId, siteId );
 
-		let products: Array< any > = [];
-		let redirectUrl = `/checkout/${ siteSlug }`;
-		const planCycle = 'business-monthly';
-		if ( ! isSiteEligibleForManagedExternalThemes && ! isPurchased ) {
-			products = [ externalManagedThemeProduct ];
-			redirectUrl = `/checkout/${ siteSlug }/${ planCycle }`;
-		} else if ( isSiteEligibleForManagedExternalThemes && ! isPurchased ) {
-			products = [ externalManagedThemeProduct ];
+		const cartItems: Array< MinimalRequestCartProduct > = [ externalManagedThemeProduct ];
+
+		if ( ! isSiteEligibleForManagedExternalThemes ) {
+			cartItems.push( { product_slug: PLAN_BUSINESS_MONTHLY } );
 		}
 
 		const { origin = 'https://wordpress.com' } =
 			typeof window !== 'undefined' ? window.location : {};
 
-		redirectUrl = addQueryArgs( redirectUrl, {
+		const redirectUrl = addQueryArgs( `/checkout/${ siteSlug }`, {
 			redirect_to: `${ origin }/theme/${ themeId }/${ siteSlug }`,
 		} );
 
-		if ( products.length ) {
-			dispatch( isLoadingCart( true ) );
-			const cartKey = await cartManagerClient.getCartKeyForSiteSlug( siteSlug as string );
-			cartManagerClient
-				.forCartKey( cartKey )
-				.actions.addProductsToCart( products )
-				.then( () => {
-					page( redirectUrl );
-				} )
-				.finally( () => {
-					dispatch( isLoadingCart( false ) );
-				} );
-		} else {
-			page( redirectUrl );
-		}
+		dispatch( isLoadingCart( true ) );
+		const cartKey = await cartManagerClient.getCartKeyForSiteSlug( siteSlug as string );
+		cartManagerClient
+			.forCartKey( cartKey )
+			.actions.addProductsToCart( cartItems )
+			.then( () => {
+				page( redirectUrl );
+			} )
+			.finally( () => {
+				dispatch( isLoadingCart( false ) );
+			} );
 	};
 }
