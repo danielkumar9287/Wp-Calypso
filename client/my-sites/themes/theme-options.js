@@ -64,9 +64,7 @@ function getAllThemeOptions( { translate, isFSEActive } ) {
 			context: 'verb',
 			comment: 'label for selecting a site for which to purchase a theme',
 		} ),
-		getUrl: () => {
-			// TODO - The checkout url will come later once the store product functionality is done on wpcom
-		},
+		action: addExternalManagedThemeToCart,
 		hideForTheme: ( state, themeId, siteId ) =>
 			( isJetpackSite( state, siteId ) && ! isSiteWpcomAtomic( state, siteId ) ) || // No individual theme purchase on a JP site
 			! isUserLoggedIn( state ) || // Not logged in
