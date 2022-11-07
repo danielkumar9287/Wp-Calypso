@@ -7,6 +7,7 @@ import KeyedSuggestions from 'calypso/components/keyed-suggestions';
 import Search, { SEARCH_MODE_ON_ENTER } from 'calypso/components/search';
 import StickyPanel from 'calypso/components/sticky-panel';
 import { getThemeFilters } from 'calypso/state/themes/selectors';
+import useOutsideClickCallback from './use-outside-click-callback';
 import { allowSomeThemeFilters, computeEditedSearchElement, insertSuggestion } from './utils';
 import type { ThemeFilters } from './types';
 import './style.scss';
@@ -17,6 +18,7 @@ interface SearchThemesProps {
 }
 
 const SearchThemes: React.FC< SearchThemesProps > = ( { query, onSearch } ) => {
+	const wrapperRef = useRef< HTMLDivElement | null >( null );
 	const searchRef = useRef< Search | null >( null );
 	const translate = useTranslate();
 	const filters = useSelector( ( state ) =>
@@ -27,6 +29,8 @@ const SearchThemes: React.FC< SearchThemesProps > = ( { query, onSearch } ) => {
 	const [ editedSearchElement, setEditedSearchElement ] = useState( '' );
 	const [ isApplySearch, setIsApplySearch ] = useState( false );
 	const [ isSearchOpen, setIsSearchOpen ] = useState( false );
+
+	useOutsideClickCallback( wrapperRef, () => setIsSearchOpen( false ) );
 
 	const findTextForSuggestions = ( inputValue: string ) => {
 		const val = inputValue;
@@ -65,6 +69,7 @@ const SearchThemes: React.FC< SearchThemesProps > = ( { query, onSearch } ) => {
 
 	return (
 		<div
+			ref={ wrapperRef }
 			className={ classNames( 'search-themes', {
 				'has-keyed-suggestions': isSearchOpen,
 			} ) }
