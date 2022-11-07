@@ -2,13 +2,13 @@ import type { ThemeFilter } from './types';
 
 export const allowSomeThemeFilters = ( {
 	feature,
-	column,
 	subject,
+	column,
 }: {
 	feature?: ThemeFilter;
-	column?: ThemeFilter;
 	subject?: ThemeFilter;
-} ) => ( { feature, column, subject } );
+	column?: ThemeFilter;
+} ) => ( { feature, subject, column } );
 
 export const findEditedTokenIndex = ( tokens: string[], cursorPosition: number ): number => {
 	let tokenEnd = 0;

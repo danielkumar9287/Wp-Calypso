@@ -4,10 +4,37 @@ import { has, pick, pickBy, without, isEmpty, map, sortBy, partition, includes }
 import PropTypes from 'prop-types';
 import { Component } from 'react';
 import { cosineSimilarity } from 'calypso/lib/trigram';
+import ColumnIcon from './icons/column.svg';
+import FeatureIcon from './icons/feature.svg';
+import SubjectIcon from './icons/subject.svg';
 
 import './style.scss';
 
 const SEARCH_THRESHOLD = 0.45;
+const TAXONOMY_TRANSLATIONS = {
+	feature: i18n.translate( 'Feature', {
+		context: 'Theme Showcase filter name',
+	} ),
+	layout: i18n.translate( 'Layout', {
+		context: 'Theme Showcase filter name',
+	} ),
+	column: i18n.translate( 'Columns', {
+		context: 'Theme Showcase filter name',
+	} ),
+	subject: i18n.translate( 'Subject', {
+		context: 'Theme Showcase filter name',
+	} ),
+	style: i18n.translate( 'Style', {
+		context: 'Theme Showcase filter name',
+	} ),
+};
+
+const TAXONOMY_ICONS = {
+	feature: FeatureIcon,
+	subject: SubjectIcon,
+	column: ColumnIcon,
+};
+
 const noop = () => {};
 
 function SuggestionsButtonAll( props ) {
@@ -30,6 +57,7 @@ class KeyedSuggestions extends Component {
 		exclusions: PropTypes.array,
 		showAllLabelText: PropTypes.string,
 		showLessLabelText: PropTypes.string,
+		isShowTopLevelTermsOnEmpty: PropTypes.bool,
 	};
 
 	static defaultProps = {
@@ -332,27 +360,54 @@ class KeyedSuggestions extends Component {
 		} );
 	};
 
+	createTopLevelTermsSuggestions = () => {
+		const rendered = [
+			<div className="keyed-suggestions__category" key="search-by">
+				<span className="keyed-suggestions__category-name">
+					{ i18n.translate( 'Search by', {
+						context: 'Theme Showcase filter name',
+					} ) }
+				</span>
+			</div>,
+		];
+
+		Object.keys( this.props.terms ).map( ( key, i ) => {
+			const isSelected = i === this.state.suggestionPosition;
+			const className = classNames( 'keyed-suggestions__value', {
+				'is-selected': isSelected,
+			} );
+
+			rendered.push(
+				/* eslint-disable jsx-a11y/no-static-element-interactions, jsx-a11y/mouse-events-have-key-events */
+				<span
+					className={ className }
+					onMouseDown={ this.onMouseDown }
+					onMouseOver={ this.onMouseOver }
+					key={ key }
+				>
+					<span className="keyed-suggestions__value-category">{ key + ': ' }</span>
+					<span>
+						<img src={ TAXONOMY_ICONS[ key ] } alt="" role="presentation" />
+					</span>
+					<span className="keyed-suggestions__value-label-wigh-highlight">
+						<span className="keyed-suggestions__value-normal">
+							{ TAXONOMY_TRANSLATIONS[ key ] }
+						</span>
+					</span>
+					<span className="keyed-suggestions__value-description">
+						{ Object.keys( this.props.terms[ key ] ).length.toString() }
+					</span>
+				</span>
+				/* eslint-enable jsx-a11y/no-static-element-interactions, jsx-a11y/mouse-events-have-key-events */
+			);
+		} );
+
+		return <div className="keyed-suggestions__suggestions">{ rendered }</div>;
+	};
+
 	createSuggestions = ( suggestions ) => {
 		let noOfSuggestions = 0;
 		const rendered = [];
-
-		const taxonomyTranslations = {
-			feature: i18n.translate( 'Feature', {
-				context: 'Theme Showcase filter name',
-			} ),
-			layout: i18n.translate( 'Layout', {
-				context: 'Theme Showcase filter name',
-			} ),
-			column: i18n.translate( 'Columns', {
-				context: 'Theme Showcase filter name',
-			} ),
-			subject: i18n.translate( 'Subject', {
-				context: 'Theme Showcase filter name',
-			} ),
-			style: i18n.translate( 'Style', {
-				context: 'Theme Showcase filter name',
-			} ),
-		};
 
 		for ( const key in suggestions ) {
 			if ( ! has( suggestions, key ) ) {
@@ -364,7 +419,7 @@ class KeyedSuggestions extends Component {
 			//Add header
 			rendered.push(
 				<div className="keyed-suggestions__category" key={ key }>
-					<span className="keyed-suggestions__category-name">{ taxonomyTranslations[ key ] }</span>
+					<span className="keyed-suggestions__category-name">{ TAXONOMY_TRANSLATIONS[ key ] }</span>
 					<span className="keyed-suggestions__category-counter">
 						{ key === this.state.showAll
 							? total
@@ -428,7 +483,11 @@ class KeyedSuggestions extends Component {
 
 	render() {
 		return (
-			<div className="keyed-suggestions">{ this.createSuggestions( this.state.suggestions ) }</div>
+			<div className="keyed-suggestions">
+				{ this.props.isShowTopLevelTermsOnEmpty && this.props.input === ''
+					? this.createTopLevelTermsSuggestions()
+					: this.createSuggestions( this.state.suggestions ) }
+			</div>
 		);
 	}
 }

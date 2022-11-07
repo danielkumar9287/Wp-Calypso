@@ -98,7 +98,7 @@ const SearchThemes: React.FC< SearchThemesProps > = ( { query, onSearch } ) => {
 							setIsApplySearch( false );
 						} }
 					>
-						{ editedSearchElement !== '' && editedSearchElement.length > 2 && (
+						{ isSearchOpen && (
 							<KeyedSuggestions
 								input={ editedSearchElement }
 								terms={ filters }
@@ -106,6 +106,7 @@ const SearchThemes: React.FC< SearchThemesProps > = ( { query, onSearch } ) => {
 								exclusions={ [ /twenty.*?two/ ] }
 								showAllLabelText={ translate( 'View all' ) }
 								showLessLabelText={ translate( 'View less' ) }
+								isShowTopLevelTermsOnEmpty
 							/>
 						) }
 						{ searchInput !== '' && (
