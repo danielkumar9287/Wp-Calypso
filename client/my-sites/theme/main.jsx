@@ -733,11 +733,6 @@ class ThemeSheet extends Component {
 		);
 	};
 
-	onClickBanner = () => {
-		const { addExternalManagedThemeToCart } = this.props;
-		addExternalManagedThemeToCart();
-	};
-
 	renderSheet = () => {
 		const section = this.validateSection( this.props.section );
 		const {
@@ -834,7 +829,7 @@ class ThemeSheet extends Component {
 					feature={ WPCOM_FEATURES_PREMIUM_THEMES }
 					forceHref={ ! isExternallyManagedTheme }
 					disableHref={ isExternallyManagedTheme }
-					onClick={ isExternallyManagedTheme ? this.onClickBanner : null }
+					onClick={ isExternallyManagedTheme ? this.onButtonClick : null }
 					href={ plansUrl }
 					showIcon={ true }
 					forceDisplay={ forceDisplay }
