@@ -34,7 +34,6 @@ import NavTabs from 'calypso/components/section-nav/tabs';
 import PageViewTracker from 'calypso/lib/analytics/page-view-tracker';
 import { decodeEntities, preventWidows } from 'calypso/lib/formatting';
 import { PerformanceTrackerStop } from 'calypso/lib/performance-tracking';
-import CalypsoShoppingCartProvider from 'calypso/my-sites/checkout/calypso-shopping-cart-provider';
 import AutoLoadingHomepageModal from 'calypso/my-sites/themes/auto-loading-homepage-modal';
 import { localizeThemesPath } from 'calypso/my-sites/themes/helpers';
 import ThanksModal from 'calypso/my-sites/themes/thanks-modal';
@@ -49,7 +48,6 @@ import isVipSite from 'calypso/state/selectors/is-vip-site';
 import siteHasFeature from 'calypso/state/selectors/site-has-feature';
 import { getSiteSlug, isJetpackSite } from 'calypso/state/sites/selectors';
 import { setThemePreviewOptions } from 'calypso/state/themes/actions';
-import { useAddExternalManagedThemeToCart } from 'calypso/state/themes/hooks/use-add-external-managed-theme-to-cart';
 import {
 	doesThemeBundleSoftwareSet,
 	isThemeActive,
@@ -68,6 +66,7 @@ import {
 	isExternallyManagedTheme as getIsExternallyManagedTheme,
 	isSiteEligibleForManagedExternalThemes as getIsSiteEligibleForManagedExternalThemes,
 } from 'calypso/state/themes/selectors';
+import { getIsLoadingCart } from 'calypso/state/themes/selectors/get-is-loading-cart';
 import { getBackPath } from 'calypso/state/themes/themes-ui/selectors';
 import { getSelectedSiteId } from 'calypso/state/ui/selectors';
 import ThemeDownloadCard from './theme-download-card';
@@ -126,10 +125,6 @@ class ThemeSheet extends Component {
 		section: '',
 	};
 
-	state = {
-		isLoading: false,
-	};
-
 	scrollToTop = () => {
 		window.scroll( 0, 0 );
 	};
@@ -156,12 +151,8 @@ class ThemeSheet extends Component {
 	};
 
 	onButtonClick = () => {
-		const { defaultOption, id, externallyManagedTheme, addExternalManagedThemeToCart } = this.props;
-		if ( ! externallyManagedTheme || ! config.isEnabled( 'themes/third-party-premium' ) ) {
-			defaultOption.action && defaultOption.action( id );
-		} else {
-			addExternalManagedThemeToCart();
-		}
+		const { defaultOption, id } = this.props;
+		defaultOption.action && defaultOption.action( id );
 	};
 
 	onSecondaryButtonClick = () => {
@@ -933,8 +924,6 @@ const ConnectedThemeSheet = connectOptions( ThemeSheet );
 
 const ThemeSheetWithOptions = ( props ) => {
 	const {
-		id,
-		siteSlug,
 		siteId,
 		isActive,
 		isLoggedIn,
@@ -973,32 +962,15 @@ const ThemeSheetWithOptions = ( props ) => {
 		defaultOption = 'activate';
 	}
 
-	const [ addExternalManagedThemeToCart, isLoading ] = useAddExternalManagedThemeToCart( {
-		id,
-		siteSlug,
-		isSiteEligibleForManagedExternalThemes,
-		isPurchased,
-	} );
-
 	return (
 		<ConnectedThemeSheet
 			{ ...props }
 			demo_uri={ demoUrl }
-			isLoading={ isLoading }
-			addExternalManagedThemeToCart={ addExternalManagedThemeToCart }
 			siteId={ siteId }
 			defaultOption={ defaultOption }
 			secondaryOption={ secondaryOption }
 			source="showcase-sheet"
 		/>
-	);
-};
-
-const ThemeSheetWrapper = ( props ) => {
-	return (
-		<CalypsoShoppingCartProvider>
-			<ThemeSheetWithOptions { ...props } />
-		</CalypsoShoppingCartProvider>
 	);
 };
 
@@ -1053,10 +1025,11 @@ export default connect(
 				state,
 				siteId
 			),
+			isLoading: getIsLoadingCart( state ),
 		};
 	},
 	{
 		setThemePreviewOptions,
 		recordTracksEvent,
 	}
-)( localize( ThemeSheetWrapper ) );
+)( localize( ThemeSheetWithOptions ) );
