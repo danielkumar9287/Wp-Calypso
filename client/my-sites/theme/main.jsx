@@ -954,6 +954,12 @@ const ThemeSheetWithOptions = ( props ) => {
 		defaultOption = 'upgradePlan';
 	} else if ( isExternallyManagedTheme && ! isSiteEligibleForManagedExternalThemes ) {
 		defaultOption = 'upgradePlanForExternallyManagedThemes';
+	} else if (
+		isExternallyManagedTheme &&
+		isSiteEligibleForManagedExternalThemes &&
+		! isPurchased
+	) {
+		defaultOption = 'subscribe';
 	} else if ( isPremium && ! isPurchased && ! isBundledSoftwareSet ) {
 		defaultOption = 'purchase';
 	} else if ( isPremium && ! isPurchased && isBundledSoftwareSet ) {
