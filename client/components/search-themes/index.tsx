@@ -91,8 +91,8 @@ const SearchThemes: React.FC< SearchThemesProps > = ( { query, onSearch } ) => {
 		focusOnInput();
 	};
 
-	const onKeyDown = ( event ) => {
-		findTextForSuggestions( event.target.value );
+	const onKeyDown = ( event: React.KeyboardEvent< HTMLInputElement > ) => {
+		findTextForSuggestions( ( event.target as HTMLInputElement ).value );
 		suggestionsRef.current?.handleKeyEvent( event );
 	};
 

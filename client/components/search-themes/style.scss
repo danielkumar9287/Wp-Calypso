@@ -38,19 +38,28 @@ $search-border-radius: 4px;
 		position: relative;
 
 		&.is-open {
+			&.has-focus,
+			&.has-focus:hover {
+				border-color: var(--color-primary);
+				box-shadow: none;
+
+				.keyed-suggestions {
+					border-color: var(--color-primary);
+				}
+			}
+
 			.search__input,
 			.search__icon-navigation {
 				border-radius: $search-border-radius;
 			}
 		}
-	}
 
-	.search__open-icon {
-		transform: rotate(-90deg) scale(1.058);
-		width: 46px;
+		.search__open-icon {
+			transform: rotate(-90deg) scale(1.058);
 
-		path {
-			fill: var(--color-neutral-30);
+			path {
+				fill: var(--color-neutral-30);
+			}
 		}
 	}
 
@@ -59,8 +68,8 @@ $search-border-radius: 4px;
 		display: flex;
 		justify-content: center;
 		height: 100%;
+		margin: 0 8px;
 		width: 24px;
-		z-index: z-index(".search", ".search .search__open-icon");
 
 		.accessible-focus &:focus {
 			outline: dotted 1px var(--color-primary);
@@ -75,6 +84,8 @@ $search-border-radius: 4px;
 	.keyed-suggestions {
 		border-bottom-left-radius: $search-border-radius;
 		border-bottom-right-radius: $search-border-radius;
+		margin-top: -3px;
+		transition: all 0.15s ease-in-out;
 		top: 56px;
 
 		.keyed-suggestions__suggestions {
@@ -89,7 +100,7 @@ $search-border-radius: 4px;
 			font-size: 0.75rem;
 			gap: 8px;
 			line-height: 20px;
-			padding: 8px;
+			padding: 8px 14px;
 			position: sticky;
 			top: 0;
 			z-index: 1;
@@ -121,7 +132,7 @@ $search-border-radius: 4px;
 			font-size: 0;
 			gap: 16px;
 			justify-content: flex-start;
-			padding: 8px;
+			padding: 8px 14px;
 
 			&.is-selected {
 				background-color: var(--color-neutral-0);
