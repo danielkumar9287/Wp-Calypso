@@ -168,6 +168,7 @@
 		"signup/tailored-ecommerce": true,
 		"signup/woo-verify-email": false,
 		"site-indicator": true,
+		"site-setup/pa-starting-point": true,
 		"ssr/prefetch-timebox": false,
 		"stats/fixed-nav-headers": true,
 		"stats/new-annual-highlights": true,

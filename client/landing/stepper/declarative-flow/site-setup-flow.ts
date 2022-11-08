@@ -47,6 +47,7 @@ export const siteSetupFlow: Flow = {
 			'options',
 			'designSetup',
 			'patternAssembler',
+			'patternAssemblerStartingPoint',
 			'bloggerStartingPoint',
 			'courses',
 			'storeFeatures',
@@ -91,6 +92,8 @@ export const siteSetupFlow: Flow = {
 
 		const isEnglishLocale = useIsEnglishLocale();
 		const isEnabledFTM = isEnabled( 'signup/ftm-flow-non-en' ) || isEnglishLocale;
+		const isEnabledPatternAssemblerStartingPoint =
+			isEnabled( 'site-setup/pa-starting-point' ) && isEnglishLocale;
 		const urlQueryParams = useQuery();
 		const isPluginBundleEligible = useIsPluginBundleEligible();
 		const isDesktop = useViewportMatch( 'large' );
@@ -193,7 +196,18 @@ export const siteSetupFlow: Flow = {
 					return navigate( 'processing' );
 
 				case 'patternAssembler':
+					if ( isEnabledPatternAssemblerStartingPoint ) {
+						return navigate( 'patternAssemblerStartingPoint' );
+					}
 					return navigate( 'processing' );
+
+				case 'patternAssemblerStartingPoint': {
+					const startingPoint = params[ 0 ];
+					if ( startingPoint === 'courses' ) {
+						return navigate( 'courses' );
+					}
+					return navigate( 'processing' );
+				}
 
 				case 'processing': {
 					const processingResult = params[ 0 ] as ProcessingResult;
@@ -374,7 +388,7 @@ export const siteSetupFlow: Flow = {
 				}
 
 				case 'courses': {
-					return exitFlow( `/post/${ siteSlug }` );
+					return navigate( 'processing' );
 				}
 
 				case 'vertical': {
