@@ -20,6 +20,7 @@ interface SearchThemesProps {
 const SearchThemes: React.FC< SearchThemesProps > = ( { query, onSearch } ) => {
 	const wrapperRef = useRef< HTMLDivElement | null >( null );
 	const searchRef = useRef< Search | null >( null );
+	const suggestionsRef = useRef< KeyedSuggestions | null >( null );
 	const translate = useTranslate();
 	const filters = useSelector( ( state ) =>
 		allowSomeThemeFilters( getThemeFilters( state ) as ThemeFilters )
@@ -90,6 +91,11 @@ const SearchThemes: React.FC< SearchThemesProps > = ( { query, onSearch } ) => {
 		focusOnInput();
 	};
 
+	const onKeyDown = ( event ) => {
+		findTextForSuggestions( event.target.value );
+		suggestionsRef.current?.handleKeyEvent( event );
+	};
+
 	return (
 		<div
 			ref={ wrapperRef }
@@ -113,6 +119,7 @@ const SearchThemes: React.FC< SearchThemesProps > = ( { query, onSearch } ) => {
 						searchMode={ SEARCH_MODE_ON_ENTER }
 						applySearch={ isApplySearch }
 						hideClose
+						onKeyDown={ onKeyDown }
 						onSearch={ onSearch }
 						onSearchOpen={ () => setIsSearchOpen( true ) }
 						onSearchClose={ () => setIsSearchOpen( false ) }
@@ -124,13 +131,14 @@ const SearchThemes: React.FC< SearchThemesProps > = ( { query, onSearch } ) => {
 					>
 						{ isSearchOpen && (
 							<KeyedSuggestions
+								ref={ suggestionsRef }
 								input={ editedSearchElement }
 								terms={ filters }
 								suggest={ suggest }
 								exclusions={ [ /twenty.*?two/ ] }
 								showAllLabelText={ translate( 'View all' ) }
 								showLessLabelText={ translate( 'View less' ) }
-								isShowTopLevelTermsOnEmpty
+								isShowTopLevelTermsOnMount
 							/>
 						) }
 						{ searchInput !== '' && (

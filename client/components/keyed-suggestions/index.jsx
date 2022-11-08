@@ -8,7 +8,6 @@ import { cosineSimilarity } from 'calypso/lib/trigram';
 
 import './style.scss';
 
-const SEARCH_THRESHOLD = 0.45;
 const TAXONOMY_TRANSLATIONS = {
 	feature: i18n.translate( 'Feature', {
 		context: 'Theme Showcase filter name',
@@ -37,6 +36,7 @@ const TAXONOMY_ICONS = {
 	column: layout,
 };
 
+const SEARCH_THRESHOLD = 0.45;
 const noop = () => {};
 
 function SuggestionsButtonAll( props ) {
@@ -59,7 +59,7 @@ class KeyedSuggestions extends Component {
 		exclusions: PropTypes.array,
 		showAllLabelText: PropTypes.string,
 		showLessLabelText: PropTypes.string,
-		isShowTopLevelTermsOnEmpty: PropTypes.bool,
+		isShowTopLevelTermsOnMount: PropTypes.bool,
 	};
 
 	static defaultProps = {
@@ -75,6 +75,7 @@ class KeyedSuggestions extends Component {
 		suggestions: {},
 		filterTerm: '',
 		showAll: '',
+		isShowTopLevelTerms: false,
 	};
 
 	setInitialState = ( input ) => {
@@ -88,15 +89,32 @@ class KeyedSuggestions extends Component {
 		} );
 	};
 
+	setShowTopLevelTermsState = () => {
+		this.setState( {
+			taxonomySuggestionsArray: Object.keys( this.props.terms ).map( ( key ) => key + ':' ),
+			isShowTopLevelTerms: true,
+		} );
+	};
+
 	// @TODO: Please update https://github.com/Automattic/wp-calypso/issues/58453 if you are refactoring away from UNSAFE_* lifecycle methods!
 	UNSAFE_componentWillMount() {
 		this.setInitialState( this.props.input );
+		if ( this.props.isShowTopLevelTermsOnMount ) {
+			this.setShowTopLevelTermsState();
+		}
 	}
 
 	// @TODO: Please update https://github.com/Automattic/wp-calypso/issues/58453 if you are refactoring away from UNSAFE_* lifecycle methods!
 	UNSAFE_componentWillReceiveProps( nextProps ) {
 		if ( nextProps.input !== this.props.input ) {
 			this.setInitialState( nextProps.input );
+			if ( this.props.isShowTopLevelTermsOnMount ) {
+				if ( this.props.input !== '' ) {
+					this.setShowTopLevelTermsState();
+				} else {
+					this.setState( { isShowTopLevelTerms: false } );
+				}
+			}
 		}
 	}
 
@@ -149,7 +167,7 @@ class KeyedSuggestions extends Component {
 				break;
 			case 'Enter':
 				if ( this.state.currentSuggestion ) {
-					this.props.suggest( this.state.currentSuggestion );
+					this.props.suggest( this.state.currentSuggestion, this.state.isShowTopLevelTerms );
 					return true;
 				}
 				break;
@@ -161,9 +179,7 @@ class KeyedSuggestions extends Component {
 		event.stopPropagation();
 		event.preventDefault();
 		const suggestion = event.currentTarget.textContent.split( ' ' )[ 0 ];
-		const isTopLevelTerm = this.props.isShowTopLevelTermsOnEmpty && this.props.input === '';
-
-		this.props.suggest( suggestion, isTopLevelTerm );
+		this.props.suggest( suggestion, this.state.isShowTopLevelTerms );
 	};
 
 	onMouseOver = ( event ) => {
@@ -488,7 +504,7 @@ class KeyedSuggestions extends Component {
 	render() {
 		return (
 			<div className="keyed-suggestions">
-				{ this.props.isShowTopLevelTermsOnEmpty && this.props.input === ''
+				{ this.state.isShowTopLevelTerms
 					? this.createTopLevelTermsSuggestions()
 					: this.createSuggestions( this.state.suggestions ) }
 			</div>
