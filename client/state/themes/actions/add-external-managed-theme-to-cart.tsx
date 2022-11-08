@@ -8,7 +8,6 @@ import { getSiteSlug } from 'calypso/state/sites/selectors';
 import {
 	isExternallyManagedTheme as getIsExternallyManagedTheme,
 	isSiteEligibleForManagedExternalThemes as getIsSiteEligibleForManagedExternalThemes,
-	getExternalManagedThemeProduct,
 	isPremiumThemeAvailable,
 } from 'calypso/state/themes/selectors';
 import { CalypsoDispatch } from 'calypso/state/types';
@@ -42,7 +41,8 @@ export function addExternalManagedThemeToCart( themeId: string, siteId: number )
 			getState(),
 			siteId
 		);
-		const externalManagedThemeProduct = getExternalManagedThemeProduct( themeId );
+		// TODO: use the marketplaceThemeProduct function from #69831
+		const externalManagedThemeProduct = true;
 
 		const cartItems: Array< MinimalRequestCartProduct > = [ externalManagedThemeProduct ];
 
