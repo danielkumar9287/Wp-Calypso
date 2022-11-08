@@ -42,7 +42,9 @@ export function addExternalManagedThemeToCart( themeId: string, siteId: number )
 			siteId
 		);
 		// TODO: use the marketplaceThemeProduct function from #69831
-		const externalManagedThemeProduct = true;
+		const externalManagedThemeProduct = {
+			product_slug: themeId,
+		};
 
 		const cartItems: Array< MinimalRequestCartProduct > = [ externalManagedThemeProduct ];
 
