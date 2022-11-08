@@ -70,7 +70,7 @@ class KeyedSuggestions extends Component {
 	};
 
 	state = {
-		suggestionPosition: 0,
+		suggestionPosition: -1,
 		currentSuggestion: null,
 		suggestions: {},
 		filterTerm: '',
@@ -78,43 +78,31 @@ class KeyedSuggestions extends Component {
 		isShowTopLevelTerms: false,
 	};
 
-	setInitialState = ( input ) => {
+	setInitialState = ( input, isShowTopLevelTerms ) => {
 		const suggestions = this.narrowDownAndSort( input, this.state.showAll );
-		const taxonomySuggestionsArray = this.createTaxonomySuggestionsArray( suggestions );
+		const taxonomySuggestionsArray = isShowTopLevelTerms
+			? Object.keys( this.props.terms ).map( ( key ) => key + ':' )
+			: this.createTaxonomySuggestionsArray( suggestions );
+
 		this.setState( {
 			suggestions,
 			taxonomySuggestionsArray,
-			suggestionPosition: 0,
-			currentSuggestion: taxonomySuggestionsArray[ 0 ],
-		} );
-	};
-
-	setShowTopLevelTermsState = () => {
-		this.setState( {
-			taxonomySuggestionsArray: Object.keys( this.props.terms ).map( ( key ) => key + ':' ),
-			isShowTopLevelTerms: true,
+			isShowTopLevelTerms,
 		} );
 	};
 
 	// @TODO: Please update https://github.com/Automattic/wp-calypso/issues/58453 if you are refactoring away from UNSAFE_* lifecycle methods!
 	UNSAFE_componentWillMount() {
-		this.setInitialState( this.props.input );
-		if ( this.props.isShowTopLevelTermsOnMount ) {
-			this.setShowTopLevelTermsState();
-		}
+		this.setInitialState( this.props.input, this.props.isShowTopLevelTermsOnMount );
 	}
 
 	// @TODO: Please update https://github.com/Automattic/wp-calypso/issues/58453 if you are refactoring away from UNSAFE_* lifecycle methods!
 	UNSAFE_componentWillReceiveProps( nextProps ) {
 		if ( nextProps.input !== this.props.input ) {
-			this.setInitialState( nextProps.input );
-			if ( this.props.isShowTopLevelTermsOnMount ) {
-				if ( this.props.input !== '' ) {
-					this.setShowTopLevelTermsState();
-				} else {
-					this.setState( { isShowTopLevelTerms: false } );
-				}
-			}
+			this.setInitialState(
+				nextProps.input,
+				nextProps.isShowTopLevelTermsOnMount && nextProps.input === ''
+			);
 		}
 	}
 
@@ -186,7 +174,6 @@ class KeyedSuggestions extends Component {
 		const suggestion = event.currentTarget.textContent.split( ' ' )[ 0 ];
 		this.setState( {
 			suggestionPosition: this.getPositionForSuggestion( suggestion ),
-			currentSuggestion: suggestion,
 		} );
 	};
 
