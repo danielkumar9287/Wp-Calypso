@@ -56,14 +56,37 @@ const SearchThemes: React.FC< SearchThemesProps > = ( { query, onSearch } ) => {
 		searchRef.current?.focus();
 	};
 
-	const suggest = ( suggestion: string ) => {
-		const updatedInput = insertSuggestion( suggestion, searchInput, cursorPosition );
-		updateInput( updatedInput );
-		focusOnInput();
+	const suggest = ( suggestion: string, isTopLevelTerm: boolean ) => {
+		let updatedInput = searchInput;
+
+		if ( isTopLevelTerm ) {
+			// Since we are adding an unfinished feature to the search, like "feature:" or "column:",
+			// remove other unfinished features from the search. The user doesn't want to have their
+			// search bar reading "feature: column:" after clicking feature, then column.
+			updatedInput = searchInput.replace( /(feature|column|subject):(\s|$)/i, '' );
+
+			// Add an extra leading space sometimes. If the user has "abcd" in
+			// their bar and they click to add "feature:", we want "abcd feature:",
+			// not "abcdfeature:".
+			if ( updatedInput.length > 0 && updatedInput.slice( -1 ) !== ' ' ) {
+				suggestion = ' ' + suggestion;
+			}
+
+			updateInput( searchInput + suggestion );
+			focusOnInput();
+		} else {
+			updateInput( insertSuggestion( suggestion, searchInput, cursorPosition ) );
+			setIsSearchOpen( false );
+			searchRef.current?.blur();
+		}
 	};
 
 	const clearSearch = () => {
 		setSearchInput( '' );
+		focusOnInput();
+	};
+
+	const onClickInside = () => {
 		focusOnInput();
 	};
 
@@ -79,6 +102,7 @@ const SearchThemes: React.FC< SearchThemesProps > = ( { query, onSearch } ) => {
 					className="search-themes-card"
 					role="presentation"
 					data-tip-target="search-themes-card"
+					onClick={ onClickInside }
 				>
 					<Search
 						initialValue={ searchInput }

@@ -1,12 +1,10 @@
+import { Icon, typography, layout } from '@wordpress/icons';
 import classNames from 'classnames';
 import i18n from 'i18n-calypso';
 import { has, pick, pickBy, without, isEmpty, map, sortBy, partition, includes } from 'lodash';
 import PropTypes from 'prop-types';
 import { Component } from 'react';
 import { cosineSimilarity } from 'calypso/lib/trigram';
-import ColumnIcon from './icons/column.svg';
-import FeatureIcon from './icons/feature.svg';
-import SubjectIcon from './icons/subject.svg';
 
 import './style.scss';
 
@@ -30,9 +28,13 @@ const TAXONOMY_TRANSLATIONS = {
 };
 
 const TAXONOMY_ICONS = {
-	feature: FeatureIcon,
-	subject: SubjectIcon,
-	column: ColumnIcon,
+	feature: typography,
+	subject: (
+		<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24">
+			<path d="M4 9h16v2H4V9zm0 4h10v2H4v-2z" />
+		</svg>
+	),
+	column: layout,
 };
 
 const noop = () => {};
@@ -159,7 +161,9 @@ class KeyedSuggestions extends Component {
 		event.stopPropagation();
 		event.preventDefault();
 		const suggestion = event.currentTarget.textContent.split( ' ' )[ 0 ];
-		this.props.suggest( suggestion );
+		const isTopLevelTerm = this.props.isShowTopLevelTermsOnEmpty && this.props.input === '';
+
+		this.props.suggest( suggestion, isTopLevelTerm );
 	};
 
 	onMouseOver = ( event ) => {
@@ -386,8 +390,8 @@ class KeyedSuggestions extends Component {
 					key={ key }
 				>
 					<span className="keyed-suggestions__value-category">{ key + ': ' }</span>
-					<span>
-						<img src={ TAXONOMY_ICONS[ key ] } alt="" role="presentation" />
+					<span className="keyed-suggestions__value-icon">
+						<Icon icon={ TAXONOMY_ICONS[ key ] } size={ 24 } />
 					</span>
 					<span className="keyed-suggestions__value-label-wigh-highlight">
 						<span className="keyed-suggestions__value-normal">

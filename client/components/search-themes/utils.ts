@@ -41,7 +41,7 @@ export const findEditedTokenIndex = ( tokens: string[], cursorPosition: number )
 		continue; // to the next token
 	}
 
-	return -1;
+	return cursorPosition;
 };
 
 export const computeEditedSearchElement = (
