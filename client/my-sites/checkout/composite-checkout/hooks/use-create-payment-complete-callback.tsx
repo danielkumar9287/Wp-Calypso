@@ -65,6 +65,7 @@ export default function useCreatePaymentCompleteCallback( {
 	siteSlug,
 	isJetpackCheckout = false,
 	checkoutFlow,
+	isGiftPurchase,
 }: {
 	createUserAndSiteBeforeTransaction?: boolean;
 	productAliasFromUrl?: string | undefined;
@@ -77,6 +78,7 @@ export default function useCreatePaymentCompleteCallback( {
 	siteSlug: string | undefined;
 	isJetpackCheckout?: boolean;
 	checkoutFlow?: string;
+	isGiftPurchase?: boolean;
 } ): PaymentEventCallback {
 	const cartKey = useCartKey();
 	const { responseCart, reloadFromServer: reloadCart } = useShoppingCart( cartKey );
@@ -132,6 +134,7 @@ export default function useCreatePaymentCompleteCallback( {
 				jetpackTemporarySiteId,
 				adminPageRedirect,
 				domains,
+				isGiftPurchase,
 			};
 
 			debug( 'getThankYouUrl called with', getThankYouPageUrlArguments );
@@ -279,6 +282,7 @@ export default function useCreatePaymentCompleteCallback( {
 			checkoutFlow,
 			adminPageRedirect,
 			domains,
+			isGiftPurchase,
 		]
 	);
 }
